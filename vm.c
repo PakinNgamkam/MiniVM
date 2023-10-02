@@ -113,13 +113,11 @@ void execute_instruction(word_type *registers) {
 				break;
 			case SLL_F:
 				// Shift Left Logical:
-				int shift_amount = memory.instrs[PC].reg.shift;
-				registers[rd] = registers[rt] << shift_amount;
+				registers[rd] = registers[rt] << shift;
 				break;
 			case SRL_F:
 				// Shift Right Logical:
-				int shift_amount = memory.instrs[PC].reg.shift;
-				registers[rd] = registers[rt] >> shift_amount;
+				registers[rd] = registers[rt] >> shift;
 				break;
 			case JR_F:
 				// Jump Register: 
