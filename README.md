@@ -4,6 +4,9 @@ COP3402 HW1
 # Overview
 .asm -> ASSEMBLER -> .bof -> VM -> .myo and .myp
 
+# To Compile
+- gcc vm.c disasm.c bof.c regname.c utilities.c instruction.c machine_types.c -o vm
+
 # our job is to create VM 
 
 The gist of this assignment
