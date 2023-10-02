@@ -85,13 +85,19 @@ void execute_instruction(word_type *registers) {
 				registers[rd] = registers[rs] ^ registers[rt];
 				break;
 			case MUL_F: 
-				registers[rd] = registers[rs] * registers[rt];
+				//Multiply GPR[s] and GPR[t], 
+				 = registers[rs] * registers[rt];
+				// Putting the least significant bits in LO and the most significant bits in HI. (HI, LO) ← GPR[s] × GPR[t]
+				
 				break;
 			case DIV_F:
-				registers[rd] = registers[rs] / registers[rt]; // Should I add something if it divides by 0?
+				// remainder in HI, ):HI ← GPR[s] % GPR[t]
+				= registers[rs] % registers[rt]; 
+				// quotient in LO ← GPR[s]/GPR[t])
+				= registers[rs] / registers[rt];
 				break;
 			case MFHI_F:
-				// TODO 
+				
 				break;
 			case MFLO_F:
 				// TODO 
