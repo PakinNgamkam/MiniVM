@@ -38,7 +38,13 @@ void execute_instruction(word_type *registers) {
 				EXIT = 1;
 				break;
 			case print_str_sc:
-				// TODO
+				int address = memory.instrs[PC].syscall.data_addr;
+           			while (memory.bytes[address] != '\0') 
+				{
+                			// Print each character of the string
+                			putchar(memory.bytes[address]);
+                			address++;
+				}
 				break;
 			case print_char_sc:
 				PCH = 1;
