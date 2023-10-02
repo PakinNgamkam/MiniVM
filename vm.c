@@ -98,19 +98,27 @@ void execute_instruction(word_type *registers) {
 				= registers[rs] / registers[rt];
 				break;
 			case MFHI_F:
-				
+				// Move from HI: GPR[d] ← HI
+				registers[rd] = 
 				break;
 			case MFLO_F:
-				// TODO 
+				// Move from LO: GPR[d] ← LO
+				registers[rd] = 
 				break;
 			case SLL_F:
-				// TODO 
+				// Shift Left Logical:
+				int shift_amount = memory.instrs[PC].reg.shift;
+				registers[rd] = registers[rt] << shift_amount;
 				break;
 			case SRL_F:
-				// TODO 
+				// Shift Right Logical:
+				int shift_amount = memory.instrs[PC].reg.shift;
+				registers[rd] = registers[rt] >> shift_amount;
 				break;
 			case JR_F:
-				// TODO 
+				// Jump Register: 
+				PC = registers[rs]
+				JUMP = 1;
 				break;
 			default:
 				bail_with_error("Unknown register instruction function (%d)!",
