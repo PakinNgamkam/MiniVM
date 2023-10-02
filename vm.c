@@ -73,27 +73,22 @@ void execute_instruction(word_type *registers) {
 				registers[rd] = registers[rs] - registers[rt];
 				break;
 			case AND_F: 
-				// TODO 
 				registers[rd] = registers[rs] & registers[rt];
 				break;
 			case BOR_F: 
-				// TODO 
 				registers[rd] = registers[rs] | registers[rt];
 				break;
 			case NOR_F: 
-				// TODO 
 				registers[rd] = ~(registers[rs] | registers[rt]);
 				break;
 			case XOR_F:
-				// TODO 
 				registers[rd] = registers[rs] ^ registers[rt];
 				break;
 			case MUL_F: 
-				// TODO 
 				registers[rd] = registers[rs] * registers[rt];
 				break;
 			case DIV_F:
-				// TODO 
+				registers[rd] = registers[rs] / registers[rt]; // Should I add something if it divides by 0?
 				break;
 			case MFHI_F:
 				// TODO 
