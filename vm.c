@@ -74,18 +74,23 @@ void execute_instruction(word_type *registers) {
 				break;
 			case AND_F: 
 				// TODO 
+				registers[rd] = registers[rs] & registers[rt];
 				break;
 			case BOR_F: 
 				// TODO 
+				registers[rd] = registers[rs] | registers[rt];
 				break;
 			case NOR_F: 
 				// TODO 
+				registers[rd] = ~(registers[rs] | registers[rt]);
 				break;
 			case XOR_F:
 				// TODO 
+				registers[rd] = registers[rs] ^ registers[rt];
 				break;
 			case MUL_F: 
 				// TODO 
+				registers[rd] = registers[rs] * registers[rt];
 				break;
 			case DIV_F:
 				// TODO 
