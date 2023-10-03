@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include "bof.h"
 #include "instruction.h"
 #include "machine_types.h"
@@ -13,9 +14,10 @@
 int PC = 0;
 int data_count = 0;
 int TRACING = 1;
-int EXIT = 0;
-int JUMP = 0;
-int PCH = 0;
+int EXIT, JUMP, PSTR, PCH, RCH = 0;
+int HI, LO = -1;
+
+int count = 0;
 
 static union mem_u {
 	byte_type bytes[MEMORY_SIZE_IN_BYTES];
@@ -24,10 +26,14 @@ static union mem_u {
 } memory;
 
 word_type registers[32] = {0}; // Initialize all registers to 0
-word_type LO = 0; // LO register
-word_type HI = 0; // HI register
+
 
 void execute_instruction(word_type *registers) {
+	//**********************
+	count++;
+	//**********************
+	// printf("count = %d\n", count);
+
 	instr_type it = instruction_type(memory.instrs[PC]);
 	int rs, rt, rd, shift, immed;
     switch (it) {
@@ -35,20 +41,17 @@ void execute_instruction(word_type *registers) {
 			//printf("%d ,syscall\n", PC);
 			switch (memory.instrs[PC].syscall.code) {
 			case exit_sc:
-				printf("exit works\n");
+				//printf("exit works\n");
 				EXIT = 1;
 				break;
 			case print_str_sc:
-				int address = (int)&memory.instrs[PC].syscall;
-				char *string_ptr = (char *)&memory.bytes[address];
-				printf("%s", string_ptr); // I think this works
+				PSTR = 1;
 				break;
 			case print_char_sc:
-				// TODO
 				PCH = 1;
 				break;
 			case read_char_sc:
-				// TODO
+				RCH = 1;
 				break;
 			case start_tracing_sc:
 				TRACING = 1;
@@ -63,7 +66,7 @@ void execute_instruction(word_type *registers) {
 			}
 		break;
 		case reg_instr_type:
-			printf("%d ,reg\n", PC);
+			//printf("%d ,reg\n", PC);
 			rs = memory.instrs[PC].reg.rs;
 			rd = memory.instrs[PC].reg.rd;
 			rt = memory.instrs[PC].reg.rt;
@@ -89,24 +92,31 @@ void execute_instruction(word_type *registers) {
 				registers[rd] = registers[rs] ^ registers[rt];
 				break;
 			case MUL_F: 
-				//Multiply GPR[s] and GPR[t], Putting the least significant bits in LO 
-				 LO = registers[rs] * registers[rt];
+			{
+				// Code with chatGPT
+				// //Multiply GPR[s] and GPR[t], Putting the least significant bits in LO 
+				// LO = registers[rs] * registers[rt];
 				 
-				// and the most significant bits in HI. (HI, LO) ← GPR[s] × GPR[t]
-				HI = (registers[rs] * registers[rt]) >> 32;
+				// // and the most significant bits in HI. (HI, LO) ← GPR[s] × GPR[t]
+				// HI = (registers[rs] * registers[rt]) >> 32;
+				// Assuming registers is an array of 32-bit values, like int32_t
+				int64_t result = (int64_t)registers[rs] * (int64_t)registers[rt];
+
+				LO = (int32_t)result;  // Cast to extract the lower 32 bits
+				HI = result >> 32;  // Shift to extract the upper 32 bits
 				break;
+			}
 			case DIV_F:
-				// remainder in HI, ):HI ← GPR[s] % GPR[t]
-				HI = registers[rs] % registers[rt]; 
-				// quotient in LO ← GPR[s]/GPR[t])
+				// TODO 
+				HI = registers[rs] % registers[rt];
 				LO = registers[rs] / registers[rt];
 				break;
 			case MFHI_F:
-				// Move from HI: GPR[d] ← HI
+				// TODO 
 				registers[rd] = HI;
 				break;
 			case MFLO_F:
-				// Move from LO: GPR[d] ← LO
+				// TODO 
 				registers[rd] = LO;
 				break;
 			case SLL_F:
@@ -118,7 +128,6 @@ void execute_instruction(word_type *registers) {
 				registers[rd] = registers[rt] >> shift;
 				break;
 			case JR_F:
-				// Jump Register: 
 				PC = registers[rs];
 				JUMP = 1;
 				break;
@@ -130,29 +139,34 @@ void execute_instruction(word_type *registers) {
 		break;
 
 		case immed_instr_type:
-			printf("%d ,immed\n", PC);
+			//printf("%d ,immed\n", PC);
 			rs = memory.instrs[PC].immed.rs;
 			rt = memory.instrs[PC].immed.rt;
 			immed = memory.instrs[PC].immed.immed;
 			// for o use machine_types_formOffset(o)
 			switch (memory.instrs[PC].immed.op) {
 			case ADDI_O:
+				//registers[rt] = registers[rs] + (short int) memory.instrs[PC].immed.immed;
 				// Add immediate: GPR[t] ← GPR[s] + sgnExt(i)
 				registers[rt] = registers[rs] + machine_types_sgnExt(immed);
 				break;
 			case ANDI_O: 
+				// TODO
 				// Bitwise And immediate: GPR[t] ← GPR[s] ∧ zeroExt(i)
 				registers[rt] = registers[rs] & machine_types_zeroExt(immed);
 				break;
 			case BORI_O:
+				// TODO 
 				// Bitwise Or immediate: GPR[t] ← GPR[s] ∨ zeroExt(i)
 				registers[rt] = registers[rs] | machine_types_zeroExt(immed);
 				break;
 			case XORI_O:
+				// TODO
 				// Bitwise Xor immediate: GPR[t] ← GPR[s] xor zeroExt(i)
 				registers[rt] = registers[rs] ^ machine_types_zeroExt(immed);
 				break;
 			case BEQ_O:
+				// TODO 
 				// Branch on Equal: if GPR[s] = GPR[t] then PC ← PC + formOffset(o)
 				if(registers[rs]  == registers[rt])
 				{
@@ -161,6 +175,7 @@ void execute_instruction(word_type *registers) {
 				}
 				break;
 			case BNE_O:
+				// TODO
 				// Branch Not Equal: if GPR[s] ̸ = GPR[t] then PC ← PC + formOffset(o)
 				if(registers[rs]  != registers[rt])
 				{
@@ -168,6 +183,7 @@ void execute_instruction(word_type *registers) {
 				}
 				break;
 			case BGEZ_O: 
+				// TODO 
 				// Branch ≥ 0: if GPR[s] ≥ 0 then PC ← PC + formOffset(o)
 				if(registers[rs] >= 0)
 				{
@@ -175,6 +191,7 @@ void execute_instruction(word_type *registers) {
 				}
 				break;
 			case BGTZ_O: 
+				// TODO 
 				// Branch > 0: if GPR[s] > 0 then PC ← PC + formOffset(o)
 				if(registers[rs] > 0)
 				{
@@ -182,6 +199,7 @@ void execute_instruction(word_type *registers) {
 				} 
 				break;
 			case BLEZ_O: 
+				// TODO 
 				// Branch ≤ 0: if GPR[s] ≤ 0 then PC ← PC + formOffset(o)
 				if(registers[rs] <= 0)
 				{
@@ -189,6 +207,7 @@ void execute_instruction(word_type *registers) {
 				} 
 				break;
 			case BLTZ_O:
+				// TODO 
 				// Branch < 0: if GPR[s] < 0 then PC ← PC + formOffset(o)
 				if(registers[rs] < 0)
 				{
@@ -196,20 +215,26 @@ void execute_instruction(word_type *registers) {
 				} 
 				break;
 			case LBU_O: 
+				// TODO 
 				// Load Byte Unsigned: GPR[t] ← zeroExt(memory[GPR[b] + formOffset(o)])
 				registers[rt] = machine_types_zeroExt(memory.bytes[registers[rs] + machine_types_formOffset(immed)]);
 				break;
 			case LW_O: 
+				// TODO 
 				// Load Word (4 bytes): GPR[t] ← memory[GPR[b] + formOffset(o)]
-				registers[rt] =  memory.words[registers[rs] + machine_types_formOffset(immed)];
+				//registers[rt] =  memory[registers[rs].addr + machine_types_formOffset(immed)];
+				registers[rt] = memory.words[(registers[rs] + machine_types_formOffset(immed)) / sizeof(word_type)];
 				break;
 			case SB_O: 
+				// TODO 
 				// Store Byte (least significant byte of GPR[t]): memory[GPR[b] + formOffset(o)] ← GPR[t
-				memory.bytes[rs + machine_types_formOffset(immed)] = registers[rt];
+				//memory[registers[rs].addr + machine_types_formOffset(immed)] = registers[rt] & 1; 
+				memory.bytes[registers[rs] + machine_types_formOffset(immed)] = registers[rt] & 0xFF; 
 				break;
 			case SW_O:
+				// TODO 
 				// Store Word (4 bytes): memory[GPR[b] + formOffset(o)] ← GPR[t]
-				memory.words[rs + machine_types_formOffset(immed)] = registers[rt];
+				memory.bytes[rs + machine_types_formOffset(immed)] = registers[rt];
 				break;
 			default:
 				bail_with_error("Unknown immediate instruction opcode (%d)!",
@@ -218,17 +243,15 @@ void execute_instruction(word_type *registers) {
 			}
 		break;
 
-		// TODO: Need test Might need to fix
 		case jump_instr_type:
-			printf("jump\n");
 			switch (memory.instrs[PC].jump.op) {
 			case JMP_O:
-				PC = machine_types_formAddress(PC, memory.instrs[PC].jump.addr);
+				PC = (memory.instrs[PC].jump.addr*4);
 				JUMP = 1;
 				break;
 			case JAL_O:
-				registers[RA] = PC;
-				PC = machine_types_formAddress(PC, memory.instrs[PC].jump.addr);
+				registers[RA] = PC + 4;
+				PC = (memory.instrs[PC].jump.addr*4);
 				JUMP = 1;
 				break;
 			default:
@@ -243,34 +266,66 @@ void execute_instruction(word_type *registers) {
 					it);
 		break;
     }
-	// TO DO: skip this if instruction is Jump Type
-	//PC = PC+4;
 }
 
-void print_tracing(word_type *registers) {
-	printf("      PC: %d\t", PC);
-	printf("\n");
-	//execute_instruction(PC, registers);
-	for (int i = 0; i < 32; i++) {
-		printf("GPR[%-3s]: %d\t", regname_get(i), registers[i]);
-		if ((i + 1) % 6 == 0) {
-			printf("\n");
-		}
-	}
-	printf("\n");
+void print_tracing(word_type *registers, FILE *out_file) {
+    printf("      PC: %d\t", PC);
+    fprintf(out_file, "      PC: %d\t", PC);
 
-	for(int i = 0; i <= data_count; i++) {
-		printf("%8d: %d\t ", registers[GP] + i * BYTES_PER_WORD, memory.words[registers[GP] + i * BYTES_PER_WORD]);
-	}
-	printf("\n");
+    if (HI != -1 && LO != -1) {
+        printf("HI: %d\tLO: %d", HI, LO);
+        fprintf(out_file, "HI: %d\tLO: %d", HI, LO);
+    }
+    printf("\n");
+    fprintf(out_file, "\n");
 
-	for(int i = 0; i <= (registers[FP] - registers[SP]) / BYTES_PER_WORD; i++) {
-		printf("%8d: %d\t ", registers[SP] + i * BYTES_PER_WORD, memory.words[registers[SP] + i * BYTES_PER_WORD]);
-	}
-	printf("\n");
+    for (int i = 0; i < 32; i++) {
+        printf("GPR[%-3s]: %d\t", regname_get(i), registers[i]);
+        fprintf(out_file, "GPR[%-3s]: %d\t", regname_get(i), registers[i]);
+        if ((i + 1) % 6 == 0) {
+            printf("\n");
+            fprintf(out_file, "\n");
+        }
+    }
+    printf("\n");
+    fprintf(out_file, "\n");
 
-	printf("==> addr:%5d %s\n", PC, instruction_assembly_form(memory.instrs[PC]));
+    for (int i = 0; i <= data_count; i++) {
+        if (i == data_count) {
+            printf("%8d: %d ...", registers[GP] + i * BYTES_PER_WORD, memory.words[registers[GP] + i * BYTES_PER_WORD]);
+            fprintf(out_file, "%8d: %d ...", registers[GP] + i * BYTES_PER_WORD, memory.words[registers[GP] + i * BYTES_PER_WORD]);
+        } else {
+            printf("%8d: %d\t ", registers[GP] + i * BYTES_PER_WORD, memory.words[registers[GP] + i * BYTES_PER_WORD]);
+            fprintf(out_file, "%8d: %d\t ", registers[GP] + i * BYTES_PER_WORD, memory.words[registers[GP] + i * BYTES_PER_WORD]);
+        }
+        if ((i + 1) % 5 == 0) {
+            printf("\n");
+            fprintf(out_file, "\n");
+        }
+    }
+    printf("\n");
+    fprintf(out_file, "\n");
+
+    for (int i = 0; i <= (registers[FP] - registers[SP]) / BYTES_PER_WORD; i++) {
+        if (i == (registers[FP] - registers[SP]) / BYTES_PER_WORD) {
+            printf("%8d: %d ...", registers[SP] + i * BYTES_PER_WORD, memory.words[registers[SP] + i * BYTES_PER_WORD]);
+            fprintf(out_file, "%8d: %d ...", registers[SP] + i * BYTES_PER_WORD, memory.words[registers[SP] + i * BYTES_PER_WORD]);
+        } else {
+            printf("%8d: %d\t ", registers[SP] + i * BYTES_PER_WORD, memory.words[registers[SP] + i * BYTES_PER_WORD]);
+            fprintf(out_file, "%8d: %d\t ", registers[SP] + i * BYTES_PER_WORD, memory.words[registers[SP] + i * BYTES_PER_WORD]);
+        }
+        if ((i + 1) % 5 == 0) {
+            printf("\n");
+            fprintf(out_file, "\n");
+        }
+    }
+    printf("\n");
+    fprintf(out_file, "\n");
+
+    printf("==> addr:%5d %s\n", PC, instruction_assembly_form(memory.instrs[PC]));
+    fprintf(out_file, "==> addr:%5d %s\n", PC, instruction_assembly_form(memory.instrs[PC]));
 }
+
 
 void read_and_loadBOF(const char *filename) {
     // Open the BOF using bof_read_open
@@ -374,32 +429,72 @@ void read_and_printBOF(const char *filename) {
     fclose(out_file);
 }
 
-void future_function(const char *filename) {
-	read_and_loadBOF(filename);
+void traceBOF(const char *filename) {
+    // Construct the output filename
+    char output_filename[256];
+    strncpy(output_filename, filename, sizeof(output_filename) - 1);
+    char *dot = strrchr(output_filename, '.');
+    if (dot) {
+        *dot = '\0'; // Terminate string at the dot
+    }
+    strcat(output_filename, ".myo");
+
+    // Open the output file for writing
+    FILE *out_file = fopen(output_filename, "w");
+    if (!out_file) {
+        fprintf(stderr, "Error opening output file: %s\n", output_filename);
+        return;
+    }
+
+    read_and_loadBOF(filename);
 
 	// TO DO: need to change to while loop 
-	while (EXIT == 0) {
+	while (EXIT == 0 && count > 10) {		
 
 		if (TRACING == 1) // when instruction is STRA, TRACING = 1/ NOTR TRACING = 0 
-			print_tracing(registers);
+			print_tracing(registers, out_file);
 
 		execute_instruction(registers);
 		
 		if (JUMP == 0)
 			PC = PC+4;
-		else 
+		else {
 			JUMP = 0;
+		}
+
+		if (PSTR == 1) {
+			// Output the character from $a0 to stdout
+			int result = printf("%s", &memory.bytes[registers[4]]);
+			fprintf(out_file, "%s", &memory.bytes[registers[4]]);
+			printf("\n");
+			fprintf(out_file, "\n");
+			// Store the result in $v0
+			registers[2] = result;
+			PSTR = 0;
+		}
 		
 		if (PCH == 1) {
 			// Output the character from $a0 to stdout
 			int result = fputc(registers[4], stdout);
-			printf("\n");
+			fputc(registers[4], out_file);
+			//printf("\n");
 			// Store the result in $v0
 			registers[2] = result;
 			PCH = 0;
 		}
-		
+
+		if (RCH == 1) {
+			// Read a character from standard input
+			int result = getc(stdin);
+			fprintf(out_file, "%c", result);
+			// Store the read character (or EOF) in $v0
+			registers[2] = result;
+			RCH = 0;
+		}	
+
 	}
+	// Close the output file
+    fclose(out_file);
 }
 
 int main(int argc, char *argv[]) {
@@ -412,7 +507,7 @@ int main(int argc, char *argv[]) {
     if (argc == 3 && strcmp(argv[1], "-p") == 0) {
         read_and_printBOF(argv[2]);
     } else if (argc == 2) {
-        future_function(argv[1]);
+        traceBOF(argv[1]);
     } else {
         printf("Invalid arguments. Usage: %s [-p] <filename>\n", argv[0]);
         return 1;
