@@ -135,46 +135,79 @@ void execute_instruction(word_type *registers) {
 			// for o use machine_types_formOffset(o)
 			switch (memory.instrs[PC].immed.op) {
 			case ADDI_O:
-				registers[rt] = registers[rs] + (short int) memory.instrs[PC].immed.immed;
+				// Add immediate: GPR[t] ← GPR[s] + sgnExt(i)
+				registers[rt] = registers[rs] + machine_types_sgnExt(immed);
 				break;
 			case ANDI_O: 
-				// TODO
+				// Bitwise And immediate: GPR[t] ← GPR[s] ∧ zeroExt(i)
+				registers[rt] = registers[rs] & machine_types_zeroExt(immed);
 				break;
 			case BORI_O:
-				// TODO 
+				// Bitwise Or immediate: GPR[t] ← GPR[s] ∨ zeroExt(i)
+				registers[rt] = registers[rs] | machine_types_zeroExt(immed);
 				break;
 			case XORI_O:
-				// TODO
+				// Bitwise Xor immediate: GPR[t] ← GPR[s] xor zeroExt(i)
+				registers[rt] = registers[rs] ^ machine_types_zeroExt(immed);
 				break;
 			case BEQ_O:
-				// TODO 
+				// Branch on Equal: if GPR[s] = GPR[t] then PC ← PC + formOffset(o)
+				if(registers[rs]  == registers[rt])
+				{
+					// first shifted left 2 bits (multiplied by 4) and then sign-extended
+					PC +=  machine_types_formOffset(immed);
+				}
 				break;
 			case BNE_O:
-				// TODO
+				// Branch Not Equal: if GPR[s] ̸ = GPR[t] then PC ← PC + formOffset(o)
+				if(registers[rs]  != registers[rt])
+				{
+					PC += machine_types_formOffset(immed);
+				}
 				break;
 			case BGEZ_O: 
-				// TODO 
+				// Branch ≥ 0: if GPR[s] ≥ 0 then PC ← PC + formOffset(o)
+				if(registers[rs] >= 0)
+				{
+					PC += machine_types_formOffset(immed);
+				}
 				break;
 			case BGTZ_O: 
-				// TODO 
+				// Branch > 0: if GPR[s] > 0 then PC ← PC + formOffset(o)
+				if(registers[rs] > 0)
+				{
+					PC += machine_types_formOffset(immed);
+				} 
 				break;
 			case BLEZ_O: 
-				// TODO 
+				// Branch ≤ 0: if GPR[s] ≤ 0 then PC ← PC + formOffset(o)
+				if(registers[rs] <= 0)
+				{
+					PC += machine_types_formOffset(immed);
+				} 
 				break;
 			case BLTZ_O:
-				// TODO 
+				// Branch < 0: if GPR[s] < 0 then PC ← PC + formOffset(o)
+				if(registers[rs] < 0)
+				{
+					PC += machine_types_formOffset(immed);
+				} 
 				break;
 			case LBU_O: 
-				// TODO 
+				// Load Byte Unsigned: GPR[t] ← zeroExt(memory[GPR[b] + formOffset(o)])
+				registers[rt] = machine_types_zeroExt(memory.registers[rs].addr + machine_types_formOffset(immed)]);
 				break;
 			case LW_O: 
-				// TODO 
+				// Load Word (4 bytes): GPR[t] ← memory[GPR[b] + formOffset(o)]
+				registers[rt] =  memory[registers[rs].addr + machine_types_formOffset(immed)];
 				break;
 			case SB_O: 
-				// TODO 
+				// Store Byte (least significant byte of GPR[t]): memory[GPR[b] + formOffset(o)] ← GPR[t
+				memory[registers[rs].addr + machine_types_formOffset(immed)] = registers[rt] & 1; 
 				break;
 			case SW_O:
-				// TODO 
+				// Store Word (4 bytes): memory[GPR[b] + formOffset(o)] ← GPR[t]
+				memory[registers[rs].addr + machine_types_formOffset(immed)] = registers[rt];
 				break;
 			default:
 				bail_with_error("Unknown immediate instruction opcode (%d)!",
