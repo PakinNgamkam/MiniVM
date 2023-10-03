@@ -197,19 +197,19 @@ void execute_instruction(word_type *registers) {
 				break;
 			case LBU_O: 
 				// Load Byte Unsigned: GPR[t] ← zeroExt(memory[GPR[b] + formOffset(o)])
-				registers[rt] = machine_types_zeroExt(memory.registers[rs].addr + machine_types_formOffset(immed)]);
+				registers[rt] = machine_types_zeroExt(memory.bytes[registers[rs] + machine_types_formOffset(immed)]);
 				break;
 			case LW_O: 
 				// Load Word (4 bytes): GPR[t] ← memory[GPR[b] + formOffset(o)]
-				registers[rt] =  memory[registers[rs].addr + machine_types_formOffset(immed)];
+				registers[rt] =  memory.words[registers[rs] + machine_types_formOffset(immed)];
 				break;
 			case SB_O: 
 				// Store Byte (least significant byte of GPR[t]): memory[GPR[b] + formOffset(o)] ← GPR[t
-				memory[registers[rs].addr + machine_types_formOffset(immed)] = registers[rt] & 1; 
+				memory.bytes[rs + machine_types_formOffset(immed)] = registers[rt];
 				break;
 			case SW_O:
 				// Store Word (4 bytes): memory[GPR[b] + formOffset(o)] ← GPR[t]
-				memory.bytes[rs + machine_types_formOffset(immed)] = registers[rt];
+				memory.words[rs + machine_types_formOffset(immed)] = registers[rt];
 				break;
 			default:
 				bail_with_error("Unknown immediate instruction opcode (%d)!",
