@@ -24,7 +24,8 @@ static union mem_u {
 } memory;
 
 word_type registers[32] = {0}; // Initialize all registers to 0
-
+word_type LO = 0; // LO register
+word_type HI = 0; // HI register
 
 void execute_instruction(word_type *registers) {
 	instr_type it = instruction_type(memory.instrs[PC]);
@@ -43,6 +44,7 @@ void execute_instruction(word_type *registers) {
 				printf("%s", string_ptr); // I think this works
 				break;
 			case print_char_sc:
+				// TODO
 				PCH = 1;
 				break;
 			case read_char_sc:
@@ -88,24 +90,24 @@ void execute_instruction(word_type *registers) {
 				break;
 			case MUL_F: 
 				//Multiply GPR[s] and GPR[t], Putting the least significant bits in LO 
-				 = registers[rs] * registers[rt];
+				 LO = registers[rs] * registers[rt];
 				 
 				// and the most significant bits in HI. (HI, LO) ← GPR[s] × GPR[t]
-				= (registers[rs] * registers[rt]) >> 32;
+				HI = (registers[rs] * registers[rt]) >> 32;
 				break;
 			case DIV_F:
 				// remainder in HI, ):HI ← GPR[s] % GPR[t]
-				= registers[rs] % registers[rt]; 
+				HI = registers[rs] % registers[rt]; 
 				// quotient in LO ← GPR[s]/GPR[t])
-				= registers[rs] / registers[rt];
+				LO = registers[rs] / registers[rt];
 				break;
 			case MFHI_F:
 				// Move from HI: GPR[d] ← HI
-				registers[rd] = 
+				registers[rd] = HI
 				break;
 			case MFLO_F:
 				// Move from LO: GPR[d] ← LO
-				registers[rd] = 
+				registers[rd] = LO
 				break;
 			case SLL_F:
 				// Shift Left Logical:
