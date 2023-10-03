@@ -207,7 +207,7 @@ void execute_instruction(word_type *registers) {
 				break;
 			case SW_O:
 				// Store Word (4 bytes): memory[GPR[b] + formOffset(o)] ← GPR[t]
-				memory[registers[rs].addr + machine_types_formOffset(immed)] = registers[rt];
+				memory.bytes[rs + machine_types_formOffset(immed)] = registers[rt];
 				break;
 			default:
 				bail_with_error("Unknown immediate instruction opcode (%d)!",
