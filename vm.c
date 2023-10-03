@@ -103,11 +103,11 @@ void execute_instruction(word_type *registers) {
 				break;
 			case MFHI_F:
 				// Move from HI: GPR[d] ← HI
-				registers[rd] = HI
+				registers[rd] = HI;
 				break;
 			case MFLO_F:
 				// Move from LO: GPR[d] ← LO
-				registers[rd] = LO
+				registers[rd] = LO;
 				break;
 			case SLL_F:
 				// Shift Left Logical:
@@ -119,7 +119,7 @@ void execute_instruction(word_type *registers) {
 				break;
 			case JR_F:
 				// Jump Register: 
-				PC = registers[rs]
+				PC = registers[rs];
 				JUMP = 1;
 				break;
 			default:
