@@ -223,12 +223,12 @@ void execute_instruction(word_type *registers) {
 			printf("jump\n");
 			switch (memory.instrs[PC].jump.op) {
 			case JMP_O:
-				PC = memory.instrs[PC].jump.addr;
+				PC = machine_types_formAddress(PC, memory.instrs[PC].jump.addr);
 				JUMP = 1;
 				break;
 			case JAL_O:
 				registers[RA] = PC;
-				PC = memory.instrs[PC].jump.addr;
+				PC = machine_types_formAddress(PC, memory.instrs[PC].jump.addr);
 				JUMP = 1;
 				break;
 			default:
