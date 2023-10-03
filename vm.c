@@ -38,13 +38,9 @@ void execute_instruction(word_type *registers) {
 				EXIT = 1;
 				break;
 			case print_str_sc:
-				int address = memory.instrs[PC].syscall.data_addr;
-           			while (memory.bytes[address] != '\0') 
-				{
-                			// Print each character of the string
-                			putchar(memory.bytes[address]);
-                			address++;
-				}
+				int address = (int)&memory.instrs[PC].syscall;
+				char *string_ptr = (char *)&memory.bytes[address];
+				printf("%s", string_ptr); // I think this works
 				break;
 			case print_char_sc:
 				PCH = 1;
